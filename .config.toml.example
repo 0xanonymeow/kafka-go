@@ -1,0 +1,24 @@
+[env]
+dev = true
+
+[log]
+level = "debug"
+
+[server]
+cert_file = ""
+key_file = ""
+
+[kafka]
+conn = "localhost:9092"
+api_key = ""
+api_secret = ""
+grp = "kafka-go"
+auto_create_topic = true
+
+[[kafka.producer_topics]]
+key = "example"
+name = "producer-topic"
+
+[[kafka.consumer_topics]]
+topic = "consumer-topic"
+name = "ConsumerTopicHandler"
