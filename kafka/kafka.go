@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	pkg "github.com/0xanonymeow/kafka-go"
+	"github.com/0xanonymeow/kafka-go"
 	"github.com/0xanonymeow/kafka-go/config"
 
 	"context"
@@ -21,13 +21,11 @@ type Kafka struct {
 	reader       *_kafka.Reader
 }
 
-func NewKafka(_c interface{}) (pkg.Kafka, error) {
-	var c *config.Config
+func NewKafka(_c interface{}) (kafka.Kafka, error) {
+	c, err := config.LoadConfig(&_c)
 
-	c, ok := _c.(*config.Config)
-
-	if !ok {
-		return nil, errors.New("invalid config")
+	if err != nil {
+		return nil, err
 	}
 
 	logger := logger.GetLogger(c)

@@ -13,7 +13,7 @@ import (
 func TestConfig(t *testing.T) {
 	subtests := []subtest.Subtest{
 		{
-			Name:         "load_config",
+			Name:         "load_config_default",
 			ExpectedData: nil,
 			ExpectedErr:  nil,
 			Test: func() (interface{}, error) {
@@ -34,6 +34,97 @@ func TestConfig(t *testing.T) {
 				path := filepath.Join(currentDir, ".config.toml.example")
 
 				os.Setenv("KAFKA_GO_CONFIG_PATH", path)
+			},
+		},
+		{
+			Name:         "load_config_with_single_param",
+			ExpectedData: nil,
+			ExpectedErr:  nil,
+			Test: func() (interface{}, error) {
+				c := &Config{
+					Kafka: Kafka{
+						Connection: "localhost:9092",
+					},
+				}
+				var param interface{}
+				param = c
+
+				config, err := LoadConfig(&param)
+
+				if err != nil {
+					return nil, err
+				}
+
+				validate := validator.New()
+				err = validate.Struct(config)
+
+				return nil, err
+			},
+		},
+		{
+			Name:         "load_config_with_single_param_invalid",
+			ExpectedData: nil,
+			ExpectedErr:  errors.New("invalid config conversion"),
+			Test: func() (interface{}, error) {
+				type wrongStruct struct{}
+				w := &wrongStruct{}
+				var param interface{}
+				param = w
+
+				config, err := LoadConfig(&param)
+
+				if err != nil {
+					return nil, err
+				}
+
+				validate := validator.New()
+				err = validate.Struct(config)
+
+				return nil, err
+			},
+		},
+		{
+			Name:         "load_config_with_single_param_error",
+			ExpectedData: nil,
+			ExpectedErr:  errors.New("require struct"),
+			Test: func() (interface{}, error) {
+				type wrongKind int
+				var w wrongKind
+				var param interface{}
+				param = w
+
+				config, err := LoadConfig(&param)
+
+				if err != nil {
+					return nil, err
+				}
+
+				validate := validator.New()
+				err = validate.Struct(config)
+
+				return nil, err
+			},
+		},
+		{
+			Name:         "load_config_too_many_params_error",
+			ExpectedData: nil,
+			ExpectedErr:  errors.New("too many arguments"),
+			Test: func() (interface{}, error) {
+				type someStruct struct{}
+				s := &someStruct{}
+				var param interface{}
+				param = s
+
+				config, err := LoadConfig(&param, &param)
+
+				if err != nil {
+					return nil, err
+				}
+
+				validate := validator.New()
+				err = validate.Struct(config)
+
+				return nil, err
 			},
 		},
 		{
