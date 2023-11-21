@@ -1,40 +1,52 @@
 package example
 
 import (
+	"fmt"
+
 	pkg "github.com/0xanonymeow/kafka-go"
 	client "github.com/0xanonymeow/kafka-go/client"
 	"github.com/0xanonymeow/kafka-go/config"
-	_consumer "github.com/0xanonymeow/kafka-go/consumer"
 	"github.com/0xanonymeow/kafka-go/kafka"
 )
 
 type Consumer struct {
-	kafka pkg.Client
+	kafka                pkg.Client
+	handlerSpecificProps map[string]interface{}
 }
 
-func consumer() error {
+func ConsumerExample() error {
 	_c, err := config.LoadConfig()
 
 	if err != nil {
 		return err
 	}
 
-	k := kafka.NewKafka(_c)
-	c := client.NewClient(k, _c)
-	csmr := Consumer{
-		kafka: c,
+	k, err := kafka.NewKafka(_c)
+
+	if err != nil {
+		return nil
 	}
 
-	c.RegisterConsumerHandler(_consumer.Topic{
-		Topic:   "consumer",
-		Name:    "Handler",
-		Handler: &csmr,
-	})
+	exampleProp := "example"
+	csmr := Consumer{
+		handlerSpecificProps: map[string]interface{}{
+			"example": exampleProp,
+		},
+	}
+	_c.Kafka.Consumers[0].Type = &csmr
+	_, err = client.NewClient(k, _c)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (c *Consumer) Handler(b []byte) error {
+func (c *Consumer) ExampleHandler(b []byte) error {
+	prop := c.handlerSpecificProps["example"]
+
+	fmt.Printf("example prop: %v", prop)
 
 	return nil
 }

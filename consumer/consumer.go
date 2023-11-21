@@ -1,7 +1,10 @@
 package consumer
 
 type Topic struct {
-	Topic    string
-	Name    string
-	Handler interface{}
+	Name string
+}
+
+type Consumer struct {
+	Type   interface{}
+	Topics []Topic
 }

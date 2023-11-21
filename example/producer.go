@@ -8,15 +8,24 @@ import (
 	"github.com/0xanonymeow/kafka-go/utils"
 )
 
-func producer() error {
+func ProducerExample() error {
 	_c, err := config.LoadConfig()
 
 	if err != nil {
 		return err
 	}
 
-	k := kafka.NewKafka(_c)
-	c := client.NewClient(k, _c)
+	k, err := kafka.NewKafka(_c)
+
+	if err != nil {
+		return err
+	}
+
+	c, err := client.NewClient(k, &_c)
+
+	if err != nil {
+		return err
+	}
 
 	t, err := utils.GetTopicByKey("example")
 

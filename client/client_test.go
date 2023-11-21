@@ -9,36 +9,30 @@ import (
 	"github.com/0xanonymeow/kafka-go/config"
 	"github.com/0xanonymeow/kafka-go/consumer"
 	"github.com/0xanonymeow/kafka-go/message"
+	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 
-	"github.com/0xanonymeow/kafka-go/testings"
+	"github.com/0xanonymeow/go-subtest"
 	mock_kafka "github.com/0xanonymeow/kafka-go/testings/mock_kafka"
 
-	"github.com/pkg/errors"
 	"go.uber.org/mock/gomock"
 )
 
 const topicTest = "test-topic"
+const topicTestMethodNotExist = "test-topic-method-not-exist"
 const topicTestHandlerNotExist = "test-topic-handler-not-exist"
-const topicTestHandlerError = "test-topic-handler-error"
-const TestHandlerName string = "TopicHandler"
-const TestHandlerNameNotExist string = "TopicHandlerNotExist"
-const TestHandlerNameError string = "TopicHandlerError"
-
-func (*Client) TopicHandler([]byte) error {
-	return nil
-}
-
-func (*Client) TopicHandlerError([]byte) error {
-	return errors.New("error expected")
-}
+const topicTestMethodError = "test-topic-method-error"
 
 type TestHandler struct {
 	kafka pkg.Client
 }
 
-func (h *TestHandler) Handler([]byte) error {
+func (h *TestHandler) TestTopicHandler([]byte) error {
 	return nil
+}
+
+func (h *TestHandler) TestTopicMethodErrorHandler([]byte) error {
+	return errors.New("error expected")
 }
 
 func TestClient(t *testing.T) {
@@ -51,8 +45,9 @@ func TestClient(t *testing.T) {
 			Connection: "localhost:9092",
 		},
 	}
+	h := TestHandler{}
 
-	subtests := []testings.Subtest{
+	subtests := []subtest.Subtest{
 		{
 			Name: "new_client",
 			ExpectedData: &Client{
@@ -60,7 +55,75 @@ func TestClient(t *testing.T) {
 			},
 			ExpectedErr: nil,
 			Test: func() (interface{}, error) {
+				wg := sync.WaitGroup{}
+				wg.Add(3)
 
+				k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
+					Do(func(arg0, arg1, arg2 interface{}) {
+						defer wg.Done()
+					})
+				k.EXPECT().NewReader(gomock.Any()).Return(&kafka.Reader{})
+				k.EXPECT().Close().Return(nil)
+				t := topicTest
+				b := []byte("test")
+				m := kafka.Message{
+					Topic: t,
+					Value: b,
+				}
+				k.EXPECT().FetchMessage(gomock.Any()).Return(m, nil).
+					Do(func(arg0 interface{}) {
+						defer wg.Done()
+					})
+				k.EXPECT().CommitMessages(gomock.Any(), m).Return(nil).
+					Do(func(arg0, arg1 interface{}) {
+						defer wg.Done()
+
+						waitingLoopMu.Lock()
+						defer waitingLoopMu.Unlock()
+						waitingLoop = false
+					})
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
+							{
+								Name: t,
+							},
+						},
+						Type: &h,
+					},
+				}
+				_c := &config.Config{
+					Kafka: config.Kafka{
+						Connection: "localhost:9092",
+						Consumers:  csmrs,
+					},
+				}
+				c, err := NewClient(k, _c)
+
+				wg.Wait()
+
+				return c, err
+			},
+		},
+		{
+			Name:         "new_client_invalid_config",
+			ExpectedData: nil,
+			ExpectedErr:  errors.New("invalid config"),
+			Test: func() (interface{}, error) {
+				type wrongConfig struct{}
+				_c := &wrongConfig{}
+				c, err := NewClient(k, _c)
+
+				return c, err
+			},
+		},
+		{
+			Name: "new_client_empty_handler",
+			ExpectedData: &Client{
+				kafka: k,
+			},
+			ExpectedErr: nil,
+			Test: func() (interface{}, error) {
 				wg := sync.WaitGroup{}
 				wg.Add(1)
 
@@ -68,23 +131,73 @@ func TestClient(t *testing.T) {
 					Do(func(arg0, arg1, arg2 interface{}) {
 						defer wg.Done()
 					})
-				c := NewClient(k, _c)
+				c, err := NewClient(k, _c)
 
 				wg.Wait()
 
-				return c, nil
+				return c, err
 			},
 		},
 		{
-			Name:         "new_client_error",
+			Name:         "new_client_method_not_found",
+			ExpectedData: nil,
+			ExpectedErr:  errors.Errorf("method '%s' not found", "TestTopicMethodNotExistHandler"),
+			Test: func() (interface{}, error) {
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
+							{
+								Name: topicTestMethodNotExist,
+							},
+						},
+						Type: &h,
+					},
+				}
+				_c := &config.Config{
+					Kafka: config.Kafka{
+						Connection: "localhost:9092",
+						Consumers:  csmrs,
+					},
+				}
+				c, err := NewClient(k, _c)
+
+				return c, err
+			},
+		},
+		{
+			Name:         "new_client_handler_not_found",
+			ExpectedData: nil,
+			ExpectedErr:  errors.Errorf("handler of topic %v cannot be nil", topicTestHandlerNotExist),
+			Test: func() (interface{}, error) {
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
+							{
+								Name: topicTestHandlerNotExist,
+							},
+						},
+					},
+				}
+				_c := &config.Config{
+					Kafka: config.Kafka{
+						Connection: "localhost:9092",
+						Consumers:  csmrs,
+					},
+				}
+				c, err := NewClient(k, _c)
+
+				return c, err
+			},
+		},
+		{
+			Name:         "new_client_connection_error",
 			ExpectedData: nil,
 			ExpectedErr:  errors.Errorf("failed to connect: %v", "failed to open connection"),
 			Test: func() (interface{}, error) {
-				err := errors.New("failed to open connection")
-
 				wg := sync.WaitGroup{}
 				wg.Add(1)
 
+				err := errors.New("failed to open connection")
 				k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, err).
 					Do(func(arg0, arg1, arg2 interface{}) {
 						defer wg.Done()
@@ -93,7 +206,11 @@ func TestClient(t *testing.T) {
 						defer retryLoopMu.Unlock()
 						retryLoop = false
 					})
-				c := NewClient(k, _c)
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -136,20 +253,27 @@ func TestClient(t *testing.T) {
 						defer waitingLoopMu.Unlock()
 						waitingLoop = false
 					})
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
+							{
+								Name: topicTest,
+							},
+						},
+						Type: &h,
+					},
+				}
 				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
-						ConsumerTopics: []consumer.Topic{
-							{
-								Topic:   t,
-								Name:    TestHandlerName,
-								Handler: &Client{},
-							},
-						},
+						Consumers:  csmrs,
 					},
 				}
+				c, err := NewClient(k, _c)
 
-				c := NewClient(k, _c)
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -161,8 +285,6 @@ func TestClient(t *testing.T) {
 			ExpectedData: nil,
 			ExpectedErr:  errors.Errorf("failed to read topic: %v", io.ErrUnexpectedEOF),
 			Test: func() (interface{}, error) {
-				err := io.ErrUnexpectedEOF
-
 				wg := sync.WaitGroup{}
 				wg.Add(2)
 
@@ -172,6 +294,7 @@ func TestClient(t *testing.T) {
 					})
 				k.EXPECT().NewReader(gomock.Any()).Return(&kafka.Reader{})
 				k.EXPECT().Close().Return(nil)
+				err := io.ErrUnexpectedEOF
 				k.EXPECT().FetchMessage(gomock.Any()).Return(kafka.Message{}, err).
 					Do(func(arg0 interface{}) {
 						defer wg.Done()
@@ -181,67 +304,27 @@ func TestClient(t *testing.T) {
 						waitingLoop = false
 
 					})
-				_c := &config.Config{
-					Kafka: config.Kafka{
-						ConsumerTopics: []consumer.Topic{
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
 							{
-								Topic:   topicTest,
-								Name:    TestHandlerName,
-								Handler: &Client{},
+								Name: topicTest,
 							},
 						},
+						Type: &h,
 					},
 				}
-				c := NewClient(k, _c)
-
-				wg.Wait()
-
-				receivedErr := <-errch
-
-				return c, receivedErr
-			},
-		},
-		{
-			Name:         "message_handler_not_found",
-			ExpectedData: nil,
-			ExpectedErr:  errors.Errorf("method '%v' not found", TestHandlerNameNotExist),
-			Test: func() (interface{}, error) {
-				wg := sync.WaitGroup{}
-				wg.Add(2)
-
-				k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
-					Do(func(arg0, arg1, arg2 interface{}) {
-						defer wg.Done()
-					})
-				k.EXPECT().NewReader(gomock.Any()).Return(&kafka.Reader{})
-				k.EXPECT().Close().Return(nil)
-				t := topicTestHandlerNotExist
-				b := []byte("test")
-				m := kafka.Message{
-					Topic: t,
-					Value: b,
-				}
-				k.EXPECT().FetchMessage(gomock.Any()).Return(m, nil).
-					Do(func(arg0 interface{}) {
-						defer wg.Done()
-
-						waitingLoopMu.Lock()
-						defer waitingLoopMu.Unlock()
-						waitingLoop = false
-					})
 				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
-						ConsumerTopics: []consumer.Topic{
-							{
-								Topic:   topicTest,
-								Name:    TestHandlerNameNotExist,
-								Handler: &Client{},
-							},
-						},
+						Consumers:  csmrs,
 					},
 				}
-				c := NewClient(k, _c)
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -264,7 +347,7 @@ func TestClient(t *testing.T) {
 					})
 				k.EXPECT().NewReader(gomock.Any()).Return(&kafka.Reader{})
 				k.EXPECT().Close().Return(nil)
-				t := topicTestHandlerError
+				t := topicTestMethodError
 				b := []byte("test")
 				m := kafka.Message{
 					Topic: t,
@@ -278,18 +361,27 @@ func TestClient(t *testing.T) {
 						defer waitingLoopMu.Unlock()
 						waitingLoop = false
 					})
-				_c := &config.Config{
-					Kafka: config.Kafka{
-						ConsumerTopics: []consumer.Topic{
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
 							{
-								Topic:   t,
-								Name:    TestHandlerNameError,
-								Handler: &Client{},
+								Name: t,
 							},
 						},
+						Type: &h,
 					},
 				}
-				c := NewClient(k, _c)
+				_c := &config.Config{
+					Kafka: config.Kafka{
+						Connection: "localhost:9092",
+						Consumers:  csmrs,
+					},
+				}
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -303,8 +395,6 @@ func TestClient(t *testing.T) {
 			ExpectedData: nil,
 			ExpectedErr:  errors.Errorf("failed to commit message: %v", io.ErrClosedPipe),
 			Test: func() (interface{}, error) {
-				err := io.ErrClosedPipe
-
 				wg := sync.WaitGroup{}
 				wg.Add(3)
 
@@ -324,6 +414,7 @@ func TestClient(t *testing.T) {
 					Do(func(arg0 interface{}) {
 						defer wg.Done()
 					})
+				err := io.ErrClosedPipe
 				k.EXPECT().CommitMessages(gomock.Any(), m).Return(err).
 					Do(func(arg0, arg1 interface{}) {
 						defer wg.Done()
@@ -331,18 +422,27 @@ func TestClient(t *testing.T) {
 						defer waitingLoopMu.Unlock()
 						waitingLoop = false
 					})
-				_c := &config.Config{
-					Kafka: config.Kafka{
-						ConsumerTopics: []consumer.Topic{
+				csmrs := []consumer.Consumer{
+					{
+						Topics: []consumer.Topic{
 							{
-								Topic:   t,
-								Name:    TestHandlerName,
-								Handler: &Client{},
+								Name: t,
 							},
 						},
+						Type: &h,
 					},
 				}
-				c := NewClient(k, _c)
+				_c := &config.Config{
+					Kafka: config.Kafka{
+						Connection: "localhost:9092",
+						Consumers:  csmrs,
+					},
+				}
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -363,7 +463,11 @@ func TestClient(t *testing.T) {
 					Do(func(arg0, arg1, arg2 interface{}) {
 						defer wg.Done()
 					})
-				c := NewClient(k, _c)
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -374,7 +478,7 @@ func TestClient(t *testing.T) {
 					Value: b,
 				}
 				k.EXPECT().WriteMessages(gomock.Any(), m).Return(nil)
-				err := c.Produce(message.Message(m))
+				err = c.Produce(message.Message(m))
 
 				return nil, err
 			},
@@ -384,8 +488,6 @@ func TestClient(t *testing.T) {
 			ExpectedData: nil,
 			ExpectedErr:  errors.Errorf("failed to produce message: %v", "unknown server error"),
 			Test: func() (interface{}, error) {
-				err := errors.New("unknown server error")
-
 				wg := sync.WaitGroup{}
 				wg.Add(1)
 
@@ -393,7 +495,11 @@ func TestClient(t *testing.T) {
 					Do(func(arg0, arg1, arg2 interface{}) {
 						defer wg.Done()
 					})
-				c := NewClient(k, _c)
+				c, err := NewClient(k, _c)
+
+				if err != nil {
+					return nil, err
+				}
 
 				wg.Wait()
 
@@ -402,60 +508,14 @@ func TestClient(t *testing.T) {
 					Topic: topicTest,
 					Value: b,
 				}
+				err = errors.New("unknown server error")
 				k.EXPECT().WriteMessages(gomock.Any(), gomock.Any()).Return(err)
 				err = c.Produce(m)
 
 				return nil, err
 			},
 		},
-		{
-			Name:         "register_consumer_handler",
-			ExpectedData: nil,
-			ExpectedErr:  nil,
-			Test: func() (interface{}, error) {
-				wg := sync.WaitGroup{}
-				wg.Add(1)
-
-				k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
-					Do(func(arg0, arg1, arg2 interface{}) {
-						defer wg.Done()
-					})
-				c := NewClient(k, _c)
-				err := c.RegisterConsumerHandler(consumer.Topic{
-					Topic:   topicTest,
-					Name:    TestHandlerName,
-					Handler: c,
-				})
-
-				wg.Wait()
-
-				return nil, err
-			},
-		},
-		{
-			Name:         "register_consumer_handler_not_found",
-			ExpectedData: nil,
-			ExpectedErr:  errors.Errorf("handler '%s' not found", TestHandlerNameNotExist),
-			Test: func() (interface{}, error) {
-				wg := sync.WaitGroup{}
-				wg.Add(1)
-
-				k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
-					Do(func(arg0, arg1, arg2 interface{}) {
-						defer wg.Done()
-					})
-				c := NewClient(k, _c)
-				err := c.RegisterConsumerHandler(consumer.Topic{
-					Topic: topicTestHandlerNotExist,
-					Name:  TestHandlerNameNotExist,
-				})
-
-				wg.Wait()
-
-				return nil, err
-			},
-		},
 	}
 
-	testings.RunSubtests(t, subtests)
+	subtest.RunSubtests(t, subtests)
 }

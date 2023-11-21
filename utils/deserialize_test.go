@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/0xanonymeow/kafka-go/testings"
+	"github.com/0xanonymeow/go-subtest"
 )
 
 func TestDeserialize(t *testing.T) {
@@ -29,7 +29,7 @@ func TestDeserialize(t *testing.T) {
 		Balance: 95.5,
 	}
 
-	subtests := []testings.Subtest{
+	subtests := []subtest.Subtest{
 		{
 			Name:         "deserialize",
 			ExpectedData: nil,
@@ -65,5 +65,5 @@ func TestDeserialize(t *testing.T) {
 		},
 	}
 
-	testings.RunSubtests(t, subtests)
+	subtest.RunSubtests(t, subtests)
 }
