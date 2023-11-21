@@ -108,10 +108,11 @@ func TestClient(t *testing.T) {
 		{
 			Name:         "new_client_invalid_config",
 			ExpectedData: nil,
-			ExpectedErr:  errors.New("invalid config conversion"),
+			ExpectedErr:  errors.New("require struct"),
 			Test: func() (interface{}, error) {
-				type wrongConfig struct{}
-				_c := &wrongConfig{}
+				type wrongConfig int
+				var w wrongConfig
+				_c := &w
 				c, err := NewClient(k, _c)
 
 				return c, err

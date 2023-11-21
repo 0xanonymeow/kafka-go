@@ -8,6 +8,7 @@ import (
 	"github.com/0xanonymeow/kafka-go/consumer"
 	"github.com/0xanonymeow/kafka-go/producer"
 	"github.com/BurntSushi/toml"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Env struct {
@@ -41,17 +42,17 @@ func LoadConfig(args ...*interface{}) (*Config, error) {
 
 	if len(args) == 1 {
 		v := reflect.ValueOf(*args[0])
+
 		if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
 			return nil, errors.New("require struct")
 		}
 
-		_c, ok := (*args[0]).(*Config)
-
-		if !ok {
-			return nil, errors.New("invalid config conversion")
+		config := &mapstructure.DecoderConfig{
+			Result: &c,
 		}
 
-		c = *_c
+		decoder, _ := mapstructure.NewDecoder(config)
+		decoder.Decode(*args[0])
 	} else if len(args) > 1 {
 		return nil, errors.New("too many arguments")
 	} else {
