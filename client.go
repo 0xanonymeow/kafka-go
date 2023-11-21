@@ -1,4 +1,4 @@
-package pkg
+package kafka
 
 import (
 	"github.com/0xanonymeow/kafka-go/message"
