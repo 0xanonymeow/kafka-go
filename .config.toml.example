@@ -15,10 +15,10 @@ api_secret = ""
 grp = "kafka-go"
 auto_create_topic = true
 
-[[kafka.producer_topics]]
+[[kafka.producer.topics]]
 key = "example"
-name = "producer-topic"
+name = "producer"
 
-[[kafka.consumer_topics]]
-topic = "consumer-topic"
-name = "ConsumerTopicHandler"
+[[kafka.consumers]]
+[[kafka.consumers.topics]]
+name = "example"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/0xanonymeow/kafka-go/testings"
+	"github.com/0xanonymeow/go-subtest"
 )
 
 func TestSerialize(t *testing.T) {
@@ -21,7 +21,7 @@ func TestSerialize(t *testing.T) {
 	}
 	wrongData := make(chan int)
 
-	subtests := []testings.Subtest{
+	subtests := []subtest.Subtest{
 		{
 			Name:         "serialize",
 			ExpectedData: nil,
@@ -44,5 +44,5 @@ func TestSerialize(t *testing.T) {
 		},
 	}
 
-	testings.RunSubtests(t, subtests)
+	subtest.RunSubtests(t, subtests)
 }

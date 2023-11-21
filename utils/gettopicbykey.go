@@ -13,7 +13,7 @@ func GetTopicByKey(k string) (string, error) {
 		return "", errors.New("failed to load config")
 	}
 
-	topics := c.Kafka.ProducerTopics
+	topics := c.Kafka.Producer.Topics
 
 	for _, t := range topics {
 		if t.Key == k {

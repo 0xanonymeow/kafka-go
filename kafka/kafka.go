@@ -8,11 +8,11 @@ import (
 	"crypto/tls"
 	"time"
 
+	logger "github.com/0xanonymeow/kafka-go/logger"
 	"github.com/pkg/errors"
 	_kafka "github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/scram"
-	"github.com/sirupsen/logrus"
 )
 
 type Kafka struct {
@@ -21,7 +21,17 @@ type Kafka struct {
 	reader       *_kafka.Reader
 }
 
-func NewKafka(c *config.Config) pkg.Kafka {
+func NewKafka(_c interface{}) (pkg.Kafka, error) {
+	var c *config.Config
+
+	c, ok := _c.(*config.Config)
+
+	if !ok {
+		return nil, errors.New("invalid config")
+	}
+
+	logger := logger.GetLogger(c)
+
 	var saslMechanism sasl.Mechanism
 	var tlsConfig *tls.Config
 
@@ -36,7 +46,7 @@ func NewKafka(c *config.Config) pkg.Kafka {
 		)
 
 		if err != nil {
-			logrus.Fatal(errors.Wrap(err, "failed to create sasl mechanism"))
+			logger.Fatal(errors.Wrap(err, "failed to create sasl mechanism"))
 		}
 
 		saslMechanism = mech
@@ -90,7 +100,7 @@ func NewKafka(c *config.Config) pkg.Kafka {
 		writer:       writer,
 		readerConfig: rc,
 		reader:       nil,
-	}
+	}, nil
 }
 
 func (k *Kafka) DialContext(ctx context.Context, network, addr string) (*_kafka.Conn, error) {
