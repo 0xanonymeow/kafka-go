@@ -3,7 +3,7 @@ module github.com/0xanonymeow/kafka-go
 go 1.19
 
 require (
-	github.com/0xanonymeow/go-subtest v0.1.1
+	github.com/0xanonymeow/go-subtest v0.1.1-go-v1.19
 	github.com/BurntSushi/toml v1.3.2
 	github.com/go-playground/validator v9.31.0+incompatible
 	go.uber.org/mock v0.3.0

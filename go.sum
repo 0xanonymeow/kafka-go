@@ -1,5 +1,5 @@
-github.com/0xanonymeow/go-subtest v0.1.1 h1:GHRWYQQHHYyND410FohInfNNCQMIGzm+wylVi92xkug=
-github.com/0xanonymeow/go-subtest v0.1.1/go.mod h1:tTKshr3UyX0r6kgtyKtQyI3ya2APL+GttA4HbmTsrAg=
+github.com/0xanonymeow/go-subtest v0.1.1-go-v1.19 h1:bXzvELhcGvL7nc/3n+opNPgoHXoCC0Da4ex4w+UP/5U=
+github.com/0xanonymeow/go-subtest v0.1.1-go-v1.19/go.mod h1:bYL3j/ytepa/Go0oiZ/vdvEMUHWHalasxrIlqvaFC0w=
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
