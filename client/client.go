@@ -104,10 +104,18 @@ func _init(c *config.Config) error {
 	return nil
 }
 
-func NewClient(k pkg.Kafka, _c *config.Config) (pkg.Client, error) {
+func NewClient(k pkg.Kafka, _c interface{}) (pkg.Client, error) {
+	var c *config.Config
+
+	c, ok := _c.(*config.Config)
+
+	if !ok {
+		return nil, errors.New("invalid config")
+	}
+
 	ctx := context.Background()
 
-	err := _init(_c)
+	err := _init(c)
 
 	if err != nil {
 		return nil, err
@@ -115,7 +123,7 @@ func NewClient(k pkg.Kafka, _c *config.Config) (pkg.Client, error) {
 
 	go func() {
 		for retryLoop {
-			_, err := k.DialContext(ctx, "tcp", _c.Kafka.Connection)
+			_, err := k.DialContext(ctx, "tcp", c.Kafka.Connection)
 
 			if err != nil {
 				err = errors.Wrap(err, "failed to connect")

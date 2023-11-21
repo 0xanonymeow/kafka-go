@@ -21,7 +21,7 @@ func ProducerExample() error {
 		return err
 	}
 
-	c, err := client.NewClient(k, _c)
+	c, err := client.NewClient(k, &_c)
 
 	if err != nil {
 		return err

@@ -45,8 +45,8 @@ err = c.Produce(m)
 > Check [github.com/0xanonymeow/kafka-go/example/producer.go](https://github.com/0xanonymeow/kafka-go/blob/main/example/producer.go)
 
 1. Ensure that, in your consumer code, you create a struct method for your handler, commencing with an uppercase letter, and embed client into your struct. Additional attributes can be added as needed. Always adhere to the function signature, as the reader loop will pass the message through this parameter. Your handler method name should also conform to a specific naming pattern; it must begin with an uppercase letter and end with `Handler`. Ensure that your method name matches the topic name. For example, if your topic is `example`, your handler name should be `ExampleHandler`. If the topic contains a hyphen `-`, remove the hyphen and concatenate the words. If it contains a dot `.`, only consider the latter part.
-   
-2. 
+2.
+
 ```go
 type Consumer struct {
 	kafka Client

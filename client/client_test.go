@@ -92,15 +92,27 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				wg.Wait()
+
+				return c, err
+			},
+		},
+		{
+			Name:         "new_client_invalid_config",
+			ExpectedData: nil,
+			ExpectedErr:  errors.New("invalid config"),
+			Test: func() (interface{}, error) {
+				type wrongConfig struct{}
+				_c := &wrongConfig{}
+				c, err := NewClient(k, _c)
 
 				return c, err
 			},
@@ -141,13 +153,13 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				return c, err
 			},
@@ -166,13 +178,13 @@ func TestClient(t *testing.T) {
 						},
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				return c, err
 			},
@@ -251,13 +263,13 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				if err != nil {
 					return nil, err
@@ -302,13 +314,13 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				if err != nil {
 					return nil, err
@@ -359,13 +371,13 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				if err != nil {
 					return nil, err
@@ -420,13 +432,13 @@ func TestClient(t *testing.T) {
 						Type: &h,
 					},
 				}
-				_c := config.Config{
+				_c := &config.Config{
 					Kafka: config.Kafka{
 						Connection: "localhost:9092",
 						Consumers:  csmrs,
 					},
 				}
-				c, err := NewClient(k, &_c)
+				c, err := NewClient(k, _c)
 
 				if err != nil {
 					return nil, err
@@ -503,55 +515,6 @@ func TestClient(t *testing.T) {
 				return nil, err
 			},
 		},
-		// {
-		// 	Name:         "register_consumer_handler",
-		// 	ExpectedData: nil,
-		// 	ExpectedErr:  nil,
-		// 	Test: func() (interface{}, error) {
-		// 		wg := sync.WaitGroup{}
-		// 		wg.Add(1)
-
-		// 		k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
-		// 			Do(func(arg0, arg1, arg2 interface{}) {
-		// 				defer wg.Done()
-		// 			})
-		// 		c := NewClient(k, _c)
-		// 		err := c.RegisterConsumerHandlers([]consumer.Topic{
-		// 			{
-		// 				Name:   topicTest,
-		// 				Type: c,
-		// 			},
-		// 		})
-
-		// 		wg.Wait()
-
-		// 		return nil, err
-		// 	},
-		// },
-		// {
-		// 	Name:         "register_consumer_handler_not_found",
-		// 	ExpectedData: nil,
-		// 	ExpectedErr:  errors.Errorf("handler '%s' not found", TestMethodNameNotExist),
-		// 	Test: func() (interface{}, error) {
-		// 		wg := sync.WaitGroup{}
-		// 		wg.Add(1)
-
-		// 		k.EXPECT().DialContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(&kafka.Conn{}, nil).
-		// 			Do(func(arg0, arg1, arg2 interface{}) {
-		// 				defer wg.Done()
-		// 			})
-		// 		c := NewClient(k, _c)
-		// 		err := c.RegisterConsumerHandlers([]consumer.Topic{
-		// 			{
-		// 				Name: topicTestMethodNotExist,
-		// 			},
-		// 		})
-
-		// 		wg.Wait()
-
-		// 		return nil, err
-		// 	},
-		// },
 	}
 
 	subtest.RunSubtests(t, subtests)
