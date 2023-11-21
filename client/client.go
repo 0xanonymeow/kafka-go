@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	pkg "github.com/0xanonymeow/kafka-go"
+	"github.com/0xanonymeow/kafka-go"
 	"github.com/0xanonymeow/kafka-go/config"
 	"github.com/0xanonymeow/kafka-go/consumer"
 	log "github.com/0xanonymeow/kafka-go/logger"
@@ -14,13 +14,13 @@ import (
 	"github.com/0xanonymeow/kafka-go/producer"
 	"github.com/0xanonymeow/kafka-go/utils"
 	"github.com/pkg/errors"
-	"github.com/segmentio/kafka-go"
+	_kafka "github.com/segmentio/kafka-go"
 
 	"github.com/sirupsen/logrus"
 )
 
 type Client struct {
-	kafka   pkg.Kafka
+	kafka   kafka.Kafka
 	mapping map[string]Handler
 }
 
@@ -104,18 +104,16 @@ func _init(c *config.Config) error {
 	return nil
 }
 
-func NewClient(k pkg.Kafka, _c interface{}) (pkg.Client, error) {
-	var c *config.Config
+func NewClient(k kafka.Kafka, _c interface{}) (kafka.Client, error) {
+	c, err := config.LoadConfig(&_c)
 
-	c, ok := _c.(*config.Config)
-
-	if !ok {
-		return nil, errors.New("invalid config")
+	if err != nil {
+		return nil, err
 	}
 
 	ctx := context.Background()
 
-	err := _init(c)
+	err = _init(c)
 
 	if err != nil {
 		return nil, err
@@ -215,7 +213,7 @@ func (c *Client) Produce(m message.Message) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := c.kafka.WriteMessages(ctx, kafka.Message(m))
+	err := c.kafka.WriteMessages(ctx, _kafka.Message(m))
 
 	if err != nil {
 		return errors.Wrap(err, "failed to produce message")

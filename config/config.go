@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os"
+	"reflect"
 
 	"github.com/0xanonymeow/kafka-go/consumer"
 	"github.com/0xanonymeow/kafka-go/producer"
@@ -35,17 +36,34 @@ type Config struct {
 	Kafka Kafka `toml:"kafka"`
 }
 
-func LoadConfig() (*Config, error) {
-	path := os.Getenv("KAFKA_GO_CONFIG_PATH")
-
-	if path == "" {
-		return nil, errors.New("kafka config path cannot be empty")
-	}
-
+func LoadConfig(args ...*interface{}) (*Config, error) {
 	c := Config{}
 
-	if _, err := toml.DecodeFile(path, &c); err != nil {
-		return nil, err
+	if len(args) == 1 {
+		v := reflect.ValueOf(*args[0])
+		if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+			return nil, errors.New("require struct")
+		}
+
+		_c, ok := (*args[0]).(*Config)
+
+		if !ok {
+			return nil, errors.New("invalid config conversion")
+		}
+
+		c = *_c
+	} else if len(args) > 1 {
+		return nil, errors.New("too many arguments")
+	} else {
+		path := os.Getenv("KAFKA_GO_CONFIG_PATH")
+
+		if path == "" {
+			return nil, errors.New("kafka config path cannot be empty")
+		}
+
+		if _, err := toml.DecodeFile(path, &c); err != nil {
+			return nil, err
+		}
 	}
 
 	if c.Kafka.Connection == "" {
