@@ -6,6 +6,7 @@ require (
 	github.com/0xanonymeow/go-subtest v0.1.1
 	github.com/BurntSushi/toml v1.3.2
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/mitchellh/mapstructure v1.5.0
 	go.uber.org/mock v0.3.0
 	golang.org/x/text v0.13.0
 )

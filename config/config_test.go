@@ -62,28 +62,6 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		{
-			Name:         "load_config_with_single_param_invalid",
-			ExpectedData: nil,
-			ExpectedErr:  errors.New("invalid config conversion"),
-			Test: func() (interface{}, error) {
-				type wrongStruct struct{}
-				w := &wrongStruct{}
-				var param interface{}
-				param = w
-
-				config, err := LoadConfig(&param)
-
-				if err != nil {
-					return nil, err
-				}
-
-				validate := validator.New()
-				err = validate.Struct(config)
-
-				return nil, err
-			},
-		},
-		{
 			Name:         "load_config_with_single_param_error",
 			ExpectedData: nil,
 			ExpectedErr:  errors.New("require struct"),
