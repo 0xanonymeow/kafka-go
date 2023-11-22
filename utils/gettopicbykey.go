@@ -3,18 +3,10 @@ package utils
 import (
 	"errors"
 
-	"github.com/0xanonymeow/kafka-go/config"
+	"github.com/0xanonymeow/kafka-go/producer"
 )
 
-func GetTopicByKey(k string) (string, error) {
-	c, err := config.LoadConfig()
-
-	if err != nil {
-		return "", errors.New("failed to load config")
-	}
-
-	topics := c.Kafka.Producer.Topics
-
+func GetTopicByKey(topics []producer.Topic, k string) (string, error) {
 	for _, t := range topics {
 		if t.Key == k {
 			return t.Name, nil
