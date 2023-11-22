@@ -27,7 +27,7 @@ func ProducerExample() error {
 		return err
 	}
 
-	t, err := utils.GetTopicByKey("example")
+	t, err := utils.GetTopicByKey(_c.Kafka.Producer.Topics, "example")
 
 	if err != nil {
 		return err
