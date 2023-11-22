@@ -11,10 +11,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Env struct {
-	Development bool
-}
-
 type Kafka struct {
 	Connection             string              `toml:"conn"`
 	ApiKey                 string              `toml:"api_key"`
@@ -26,7 +22,6 @@ type Kafka struct {
 }
 
 type Config struct {
-	Env Env `toml:"env"`
 	Log struct {
 		Level string `toml:"level"`
 	} `toml:"log"`

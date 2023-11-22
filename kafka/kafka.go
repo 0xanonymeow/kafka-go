@@ -33,10 +33,7 @@ func NewKafka(_c interface{}) (kafka.Kafka, error) {
 	var saslMechanism sasl.Mechanism
 	var tlsConfig *tls.Config
 
-	if c.Env.Development {
-		saslMechanism = nil
-		tlsConfig = nil
-	} else {
+	if c.Kafka.ApiKey != "" && c.Kafka.ApiSecret != "" {
 		mech, err := scram.Mechanism(
 			scram.SHA512,
 			c.Kafka.ApiKey,
@@ -48,7 +45,9 @@ func NewKafka(_c interface{}) (kafka.Kafka, error) {
 		}
 
 		saslMechanism = mech
+	}
 
+	if c.Server.CertFile != "" && c.Server.KeyFile != "" {
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: true,
 			Certificates: []tls.Certificate{

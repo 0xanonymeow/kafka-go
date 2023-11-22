@@ -20,8 +20,7 @@ import (
 )
 
 type Client struct {
-	kafka   kafka.Kafka
-	mapping map[string]Handler
+	kafka kafka.Kafka
 }
 
 type Handler func(interface{}, []byte) error
