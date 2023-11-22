@@ -33,32 +33,34 @@ func NewKafka(_c interface{}) (kafka.Kafka, error) {
 	var saslMechanism sasl.Mechanism
 	var tlsConfig *tls.Config
 
-	if c.Kafka.ApiKey != "" && c.Kafka.ApiSecret != "" {
-		mech, err := scram.Mechanism(
-			scram.SHA512,
-			c.Kafka.ApiKey,
-			c.Kafka.ApiSecret,
-		)
+	if c.Secure.Enable {
+		if c.Secure.ApiKey != "" && c.Secure.ApiSecret != "" {
+			mech, err := scram.Mechanism(
+				scram.SHA512,
+				c.Secure.ApiKey,
+				c.Secure.ApiSecret,
+			)
 
-		if err != nil {
-			logger.Fatal(errors.Wrap(err, "failed to create sasl mechanism"))
+			if err != nil {
+				logger.Fatal(errors.Wrap(err, "failed to create sasl mechanism"))
+			}
+
+			saslMechanism = mech
 		}
 
-		saslMechanism = mech
-	}
-
-	if c.Server.CertFile != "" && c.Server.KeyFile != "" {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			Certificates: []tls.Certificate{
-				{
-					Certificate: [][]byte{
-						[]byte(c.Server.CertFile),
+		if c.Secure.CertFile != "" && c.Secure.KeyFile != "" {
+			tlsConfig = &tls.Config{
+				InsecureSkipVerify: true,
+				Certificates: []tls.Certificate{
+					{
+						Certificate: [][]byte{
+							[]byte(c.Secure.CertFile),
+						},
+						PrivateKey: []byte(c.Secure.KeyFile),
 					},
-					PrivateKey: []byte(c.Server.KeyFile),
 				},
-			},
-			MinVersion: tls.VersionTLS12,
+				MinVersion: tls.VersionTLS12,
+			}
 		}
 	}
 

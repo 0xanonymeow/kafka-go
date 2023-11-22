@@ -1,17 +1,15 @@
-[env]
-dev = true
-
 [log]
 level = "debug"
 
-[server]
+[secure]
+enable = false
 cert_file = ""
 key_file = ""
+api_key = ""
+api_secret = ""
 
 [kafka]
 conn = "localhost:9092"
-api_key = ""
-api_secret = ""
 grp = "kafka-go"
 auto_create_topic = true
 
