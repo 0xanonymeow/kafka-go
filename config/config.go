@@ -11,10 +11,16 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+type Secure struct {
+	Enable    bool   `toml:"enable"`
+	ApiKey    string `toml:"api_key"`
+	ApiSecret string `toml:"api_secret"`
+	CertFile  string `toml:"cert_file"`
+	KeyFile   string `toml:"key_file"`
+}
+
 type Kafka struct {
 	Connection             string              `toml:"conn"`
-	ApiKey                 string              `toml:"api_key"`
-	ApiSecret              string              `toml:"api_secret"`
 	Producer               producer.Producer   `toml:"producer"`
 	Consumers              []consumer.Consumer `toml:"consumers"`
 	Group                  string              `toml:"grp"`
@@ -25,11 +31,8 @@ type Config struct {
 	Log struct {
 		Level string `toml:"level"`
 	} `toml:"log"`
-	Server struct {
-		CertFile string `toml:"cert_file"`
-		KeyFile  string `toml:"key_file"`
-	} `toml:"server"`
-	Kafka Kafka `toml:"kafka"`
+	Secure Secure `toml:"secure"`
+	Kafka  Kafka  `toml:"kafka"`
 }
 
 func LoadConfig(args ...*interface{}) (*Config, error) {
