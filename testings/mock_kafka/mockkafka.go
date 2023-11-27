@@ -98,7 +98,7 @@ func (mr *MockKafkaMockRecorder) FetchMessage(arg0 any) *gomock.Call {
 }
 
 // NewReader mocks base method.
-func (m *MockKafka) NewReader(arg0 string) *kafka.Reader {
+func (m *MockKafka) NewReader(arg0 []string) *kafka.Reader {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewReader", arg0)
 	ret0, _ := ret[0].(*kafka.Reader)

@@ -45,8 +45,11 @@ func ConsumerExample() error {
 
 func (c *Consumer) ExampleHandler(b []byte) error {
 	prop := c.handlerSpecificProps["example"]
+	fmt.Printf("example prop: %v\n", prop)
 
-	fmt.Printf("example prop: %v", prop)
+	return nil
+}
 
+func (c *Consumer) AnotherExampleHandler(b []byte) error {
 	return nil
 }
