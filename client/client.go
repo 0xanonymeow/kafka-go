@@ -51,8 +51,8 @@ func registerHandler(_type interface{}, t string) (string, error) {
 		return "", errors.Errorf("method '%s' not found", m)
 	}
 
-	handlerMapper[t] = func(_ interface{}, b []byte) error {
-		reflectArgs := []reflect.Value{reflect.ValueOf(_type), reflect.ValueOf(b)}
+	handlerMapper[t] = func(i interface{}, b []byte) error {
+		reflectArgs := []reflect.Value{reflect.ValueOf(i), reflect.ValueOf(b)}
 		result := method.Func.Call([]reflect.Value(reflectArgs))
 
 		if err, ok := result[0].Interface().(error); ok && err != nil {
@@ -143,60 +143,65 @@ func NewClient(k kafka.Kafka, _c interface{}) (kafka.Client, error) {
 		}
 
 		for _, csmr := range Consumers {
-			for _, ct := range csmr.Topics {
-				go func(_type interface{}, t string) {
-					logger.Debugf("waiting for messages on %v", t)
+			var topics []string
 
-					k.NewReader(t)
-					defer k.Close()
-
-					for waitingLoop {
-						m, err := k.FetchMessage(ctx)
-
-						if err != nil {
-							err = errors.Wrap(err, "failed to read topic")
-
-							select {
-							case errch <- err:
-							default:
-							}
-
-							logger.Error(err)
-							continue
-						}
-
-						logger.Debugf("consumed event from topic %s", t)
-
-						handler := handlerMapper[m.Topic]
-
-						err = handler(_type, m.Value)
-
-						if err != nil {
-							err = errors.Wrap(err, "failed to handle topic")
-
-							select {
-							case errch <- err:
-							default:
-							}
-
-							logger.Error(err)
-							continue
-						}
-
-						err = k.CommitMessages(ctx, m)
-
-						if err != nil {
-							err = errors.Wrap(err, "failed to commit message")
-							select {
-							case errch <- err:
-							default:
-							}
-
-							logger.Error(err)
-						}
-					}
-				}(csmr.Type, ct.Name)
+			for _, t := range csmr.Topics {
+				topics = append(topics, t.Name)
 			}
+
+			k.NewReader(topics)
+
+			go func(_type interface{}) {
+				logger.Debugf("waiting for messages on %v", "")
+
+				for waitingLoop {
+					m, err := k.FetchMessage(ctx)
+
+					if err != nil {
+						err = errors.Wrap(err, "failed to read topic")
+
+						select {
+						case errch <- err:
+						default:
+						}
+
+						logger.Error(err)
+						continue
+					}
+
+					logger.Debugf("consumed event from topic %s", m.Topic)
+
+					handler := handlerMapper[m.Topic]
+
+					err = handler(_type, m.Value)
+
+					if err != nil {
+						err = errors.Wrap(err, "failed to handle topic")
+
+						select {
+						case errch <- err:
+						default:
+						}
+
+						logger.Error(err)
+						continue
+					}
+
+					err = k.CommitMessages(ctx, m)
+
+					if err != nil {
+						err = errors.Wrap(err, "failed to commit message")
+						select {
+						case errch <- err:
+						default:
+						}
+
+						logger.Error(err)
+					}
+				}
+
+				defer k.Close()
+			}(csmr.Type)
 		}
 	}()
 

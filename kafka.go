@@ -8,7 +8,7 @@ import (
 
 type Kafka interface {
 	DialContext(context.Context, string, string) (*kafka.Conn, error)
-	NewReader(string) *kafka.Reader
+	NewReader([]string) *kafka.Reader
 	WriteMessages(context.Context, kafka.Message) error
 	ReadMessage(context.Context) (kafka.Message, error)
 	FetchMessage(context.Context) (kafka.Message, error)

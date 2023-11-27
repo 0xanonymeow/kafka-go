@@ -89,7 +89,7 @@ func NewKafka(_c interface{}) (kafka.Kafka, error) {
 	rc := &_kafka.ReaderConfig{
 		Brokers:  []string{c.Kafka.Connection},
 		GroupID:  c.Kafka.Group,
-		MaxWait:  3 * time.Minute,
+		MaxWait:  10 * time.Second,
 		MinBytes: 1,
 		MaxBytes: 1024,
 		Dialer:   d,
@@ -106,8 +106,8 @@ func (k *Kafka) DialContext(ctx context.Context, network, addr string) (*_kafka.
 	return _kafka.DialContext(ctx, network, addr)
 }
 
-func (k *Kafka) NewReader(t string) *_kafka.Reader {
-	k.readerConfig.Topic = t
+func (k *Kafka) NewReader(t []string) *_kafka.Reader {
+	k.readerConfig.GroupTopics = t
 	k.reader = _kafka.NewReader(*k.readerConfig)
 
 	return k.reader

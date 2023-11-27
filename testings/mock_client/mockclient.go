@@ -11,7 +11,6 @@ package mockclient
 import (
 	reflect "reflect"
 
-	consumer "github.com/0xanonymeow/kafka-go/consumer"
 	message "github.com/0xanonymeow/kafka-go/message"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -51,18 +50,4 @@ func (m *MockClient) Produce(arg0 message.Message) error {
 func (mr *MockClientMockRecorder) Produce(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Produce", reflect.TypeOf((*MockClient)(nil).Produce), arg0)
-}
-
-// RegisterConsumerHandler mocks base method.
-func (m *MockClient) RegisterConsumerHandler(arg0 consumer.Topic) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterConsumerHandler", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RegisterConsumerHandler indicates an expected call of RegisterConsumerHandler.
-func (mr *MockClientMockRecorder) RegisterConsumerHandler(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterConsumerHandler", reflect.TypeOf((*MockClient)(nil).RegisterConsumerHandler), arg0)
 }
