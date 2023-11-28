@@ -152,7 +152,7 @@ func NewClient(k kafka.Kafka, _c interface{}) (kafka.Client, error) {
 			k.NewReader(topics)
 
 			go func(_type interface{}) {
-				logger.Debugf("waiting for messages on %v", "")
+				logger.Debugf("waiting for messages on %v", topics)
 
 				for waitingLoop {
 					m, err := k.FetchMessage(ctx)
